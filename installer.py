@@ -39,9 +39,7 @@ class ConfigurationManager:
     }
     
     OPTIONAL_FIELDS = {
-        'prefix': ('Bot Prefix', '?'),
-        'admin_id': ('Discord Admin User ID', ''),
-        'log_level': ('Log Level', 'INFO')
+        'prefix': ('Bot Prefix', '?')
     }
     
     SERVICE_CONFIGS = {
@@ -249,6 +247,7 @@ class ConfigFileUpdater:
                         f"LAVALINK_SERVER_PASSWORD={lavalink_config['password']}"
                     ]
                     service["expose"] = [lavalink_config["port"]]
+                    service["healthcheck"]["test"] = ["CMD", "curl", f"http://localhost:{lavalink_config['port']}/version"]
                     
                 if service_name == "vocard-db":
                     db_config = config['service_configs']['vocard-db']

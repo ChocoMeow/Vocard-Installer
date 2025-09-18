@@ -23,10 +23,11 @@ services:
         expose:
             - "2333"
         healthcheck:
-            test: nc -z -v localhost 2333
-            interval: 10s
-            timeout: 5s
-            retries: 5
+            test: ["CMD", "curl", "http://localhost:2333/version"]
+            interval: 5s
+            timeout: 30s
+            retries: 3
+            start_period: 20s
 
     spotify-tokener:
         image: ghcr.io/topi314/spotify-tokener:master
