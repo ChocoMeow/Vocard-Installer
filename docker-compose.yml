@@ -1,0 +1,99 @@
+# ------------------------------------------------------------------------------------------------------------ #
+
+# For installation instructions please visit - https://docs.vocard.xyz/latest/bot/setup/docker
+
+# ------------------------------------------ THANK YOU FOR READING! ------------------------------------------ #
+name: vocard
+services:
+    lavalink:
+        container_name: lavalink
+        image: ghcr.io/lavalink-devs/lavalink:latest
+        restart: unless-stopped
+        environment:
+            - _JAVA_OPTIONS=-Xmx1G
+            - SERVER_PORT=2333
+            # there is no point in changing the password here, since the container is available only in docker network
+            - LAVALINK_SERVER_PASSWORD=youshallnotpass # Change password if needed (don't forget to change it in healthcheck below and settings.json)
+        volumes:
+            - ./lavalink/application.yml:/opt/Lavalink/application.yml
+            - ./lavalink/plugins:/opt/Lavalink/plugins
+            - ./lavalink/logs:/opt/Lavalink/logs
+        networks:
+            - vocard
+        expose:
+            - "2333"
+        healthcheck:
+            test: nc -z -v localhost 2333
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+    spotify-tokener:
+        image: ghcr.io/topi314/spotify-tokener:master
+        container_name: spotify-tokener
+        restart: unless-stopped
+        environment:
+            - SPOTIFY_TOKENER_ADDR=0.0.0.0:49152
+        networks:
+            - vocard
+        ports:
+            - 49152:49152
+        healthcheck:
+            test: nc -z -v localhost 49152
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+    vocard-db:
+        container_name: vocard-db
+        image: mongo:8
+        restart: unless-stopped
+        volumes:
+            - ./data/mongo/db:/data/db
+            - ./data/mongo/conf:/data/configdb
+        environment:
+            - MONGO_INITDB_ROOT_USERNAME=admin # For your MongoDB URL use "mongodb://admin:admin@vocard-db:27017"
+            - MONGO_INITDB_ROOT_PASSWORD=admin
+        expose:
+            - "27017"
+        networks:
+            - vocard
+        command: ["mongod", "--oplogSize=1024", "--wiredTigerCacheSizeGB=1", "--auth", "--noscripting"]
+        healthcheck:
+            test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 10s
+
+    vocard-dashboard:
+        container_name: vocard-dashboard
+        image: ghcr.io/chocomeow/vocard-dashboard:latest
+        restart: unless-stopped
+        volumes:
+            - ./dashboard/settings.json:/app/settings.json
+        ports:
+            - 8000:8000
+        networks:
+            - vocard
+
+    vocard:
+        container_name: vocard
+        restart: unless-stopped
+        # If you want to build the image from the Dockerfile, uncomment the "build" lines and comment the "image" line.
+        image: ghcr.io/chocomeow/vocard:latest
+        # build:
+        #     dockerfile: ./Dockerfile
+        volumes:
+            - ./settings.json:/app/settings.json
+        networks:
+            - vocard
+        depends_on:
+            lavalink:
+                condition: service_healthy
+            vocard-db:
+                condition: service_healthy
+
+networks:
+    vocard:
+        name: vocard
