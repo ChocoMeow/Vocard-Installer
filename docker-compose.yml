@@ -36,8 +36,8 @@ services:
             - SPOTIFY_TOKENER_ADDR=0.0.0.0:49152
         networks:
             - vocard
-        ports:
-            - 49152:49152
+        expose:
+          - 49152
         healthcheck:
             test: nc -z -v localhost 49152
             interval: 10s

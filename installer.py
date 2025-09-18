@@ -48,8 +48,7 @@ class ConfigurationManager:
         'vocard-db': {
             'username': ('MongoDB Username', 'admin', str),
             'password': ('MongoDB Password', 'admin', str),
-            'dbname': ('MongoDB Database Name', 'Vocard', str),
-            'port': ('MongoDB Port', '27017', int)
+            'dbname': ('MongoDB Database Name', 'Vocard', str)
         },
         'lavalink': {
             'port': ('Lavalink Port', '2333', int),
@@ -257,7 +256,6 @@ class ConfigFileUpdater:
                         f"MONGO_INITDB_ROOT_USERNAME={db_config['username']}",
                         f"MONGO_INITDB_ROOT_PASSWORD={db_config['password']}"
                     ]
-                    service["expose"] = [db_config['port']]
                 
                 if service_name == "vocard-dashboard":
                     dashboard_config = config['service_configs']['vocard-dashboard']
@@ -288,7 +286,7 @@ class ConfigFileUpdater:
             if db_config := config['service_configs'].get('vocard-db'):
                 settings['mongodb_url'] = (
                     f"mongodb://{db_config['username']}:{db_config['password']}"
-                    f"@vocard-db:{db_config['port']}"
+                    f"@vocard-db:27017"
                 )
                 settings['mongodb_name'] = db_config['dbname']
 
