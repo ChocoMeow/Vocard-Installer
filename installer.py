@@ -55,6 +55,7 @@ class ConfigurationManager:
             'client_secret': ('Spotify Client Secret', None, str)
         },
         'vocard-dashboard': {
+            'host': ('Dashboard Host', '0.0.0.0', str),
             'port': ('Dashboard Port', '8080', int),
             'password': ('Dashboard Password', 'admin', str),
             'client_secret_id': ('Dashboard Client Secret ID', None, str),
@@ -349,6 +350,7 @@ class ConfigFileUpdater:
                 settings = json.load(f)
 
             settings.update({
+                "host": dashboard_config['host'],
                 "port": int(dashboard_config['port']),
                 "password": dashboard_config['password'],
                 "client_id": config['client_id'],
@@ -371,7 +373,7 @@ class DockerManager:
     """Handles Docker operations"""
 
     @staticmethod
-    def run_command(command: str, timeout: int = 120) -> Tuple[bool, str, str]:
+    def run_command(command: str, timeout: int = 1800) -> Tuple[bool, str, str]:
         """Run system command safely"""
         try:
             result = subprocess.run(
