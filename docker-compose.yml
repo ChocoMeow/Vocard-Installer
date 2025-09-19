@@ -23,7 +23,7 @@ services:
         expose:
             - "2333"
         healthcheck:
-            test: ["CMD", "curl", "http://localhost:2333/version"]
+            test: ["CMD-SHELL", "nc -z -v localhost 2333 || exit 1"]
             interval: 5s
             timeout: 30s
             retries: 3
