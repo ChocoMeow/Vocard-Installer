@@ -987,14 +987,20 @@ class VocardInstaller:
         
         return True
 
-    def print_success_message(self, install_dir: Path):
+    def print_success_message(self, config: Dict[str, Any]):
         """Print installation success message"""
         print("\n" + "=" * 60)
         print(f"{Colors.BOLD}{Colors.GREEN}VOCARD INSTALLATION COMPLETED!{Colors.END}")
+        print(f"{Colors.GREEN}You can invite your bot using the following link:\nhttps://discord.com/oauth2/authorize?client_id={config['client_id']}&permissions=8&scope=bot+applications.commands{Colors.END}")
+        
+        if 'vocard-dashboard' in config['enabled_services']:
+            dashboard_port = config['service_configs']['vocard-dashboard']['port']
+            print(f"{Colors.GREEN}Access the dashboard at: http://localhost:{dashboard_port}{Colors.END}")
+            
         print("=" * 60)
-        print(f"{Colors.BLUE}Installation directory: {install_dir}{Colors.END}")
+        print(f"{Colors.BLUE}Installation directory: {config['install_dir']}{Colors.END}")
         print(f"\n{Colors.CYAN}Management Commands:{Colors.END}")
-        print(f"  cd {install_dir}")
+        print(f"  cd {config['install_dir']}")
         print("  docker compose up -d    # Start services")
         print("  docker compose down     # Stop services")
         print("  docker compose logs -f  # View logs")
@@ -1002,8 +1008,8 @@ class VocardInstaller:
         
         print(f"\n{Colors.YELLOW}Troubleshooting:{Colors.END}")
         print("  If containers can't write to directories:")
-        print(f"    sudo chmod -R 755 {install_dir}")
-        print(f"    sudo chown -R $USER:$USER {install_dir}")
+        print(f"    sudo chmod -R 755 {config['install_dir']}")
+        print(f"    sudo chown -R $USER:$USER {config['install_dir']}")
         print("  If Docker permission errors occur:")
         print("    sudo usermod -aG docker $USER && newgrp docker")
         
@@ -1058,7 +1064,7 @@ class VocardInstaller:
                 return False
             
             # Print success message
-            self.print_success_message(config['install_dir'])
+            self.print_success_message(config)
             
             return True
             
