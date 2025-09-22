@@ -529,7 +529,7 @@ class ConfigFileUpdater:
     def update_docker_compose(file_path: Path, config: Dict[str, Any], disabled_services: set) -> bool:
         """Remove disabled services from docker-compose.yml"""
         try:
-            with open(file_path, 'r') as f:
+            with open(file_path, 'r', encoding="utf-8") as f:
                 docker_compose = yaml.safe_load(f)
 
             services: dict[str, Any] = docker_compose.get('services', {})
@@ -564,7 +564,7 @@ class ConfigFileUpdater:
                     dashboard_config = config['service_configs']['vocard-dashboard']
                     service["ports"] = [f"{dashboard_config['port']}:{dashboard_config['port']}"]
 
-            with open(file_path, 'w') as f:
+            with open(file_path, 'w', encoding="utf-8") as f:
                 yaml.dump(docker_compose, f, default_flow_style=False, indent=4)
 
             print(f"{Colors.GREEN}Updated docker-compose.yml{Colors.END}")
@@ -577,7 +577,7 @@ class ConfigFileUpdater:
     def update_bot_settings(file_path: Path, config: Dict[str, Any]) -> bool:
         """Update bot settings.json with user configuration"""
         try:
-            with open(file_path, 'r') as f:
+            with open(file_path, 'r', encoding="utf-8") as f:
                 settings = json.load(f)
 
             # Basic settings
@@ -606,7 +606,7 @@ class ConfigFileUpdater:
                     settings['ipc_client']['port'] = int(dashboard_config['port'])
                     settings['ipc_client']['password'] = dashboard_config['password']
 
-            with open(file_path, 'w') as f:
+            with open(file_path, 'w', encoding="utf-8") as f:
                 json.dump(settings, f, indent=4)
 
             print(f"{Colors.GREEN}Updated bot settings.json{Colors.END}")
@@ -621,7 +621,7 @@ class ConfigFileUpdater:
         try:
             lavalink_config = config['service_configs']['lavalink']
             
-            with open(file_path, 'r') as f:
+            with open(file_path, 'r', encoding="utf-8") as f:
                 settings = yaml.safe_load(f)
 
             # Update server settings
@@ -634,7 +634,7 @@ class ConfigFileUpdater:
             spotify_settings['clientSecret'] = lavalink_config['client_secret']
             spotify_settings['preferAnonymousToken'] = False
 
-            with open(file_path, 'w') as f:
+            with open(file_path, 'w', encoding="utf-8") as f:
                 yaml.dump(settings, f, default_flow_style=False, indent=4)
 
             print(f"{Colors.GREEN}Updated lavalink settings{Colors.END}")
@@ -649,7 +649,7 @@ class ConfigFileUpdater:
         try:
             dashboard_config = config['service_configs']['vocard-dashboard']
             
-            with open(file_path, 'r') as f:
+            with open(file_path, 'r', encoding="utf-8") as f:
                 settings = json.load(f)
 
             settings.update({
@@ -662,7 +662,7 @@ class ConfigFileUpdater:
                 "secret_key": dashboard_config['secret_key']
             })
 
-            with open(file_path, 'w') as f:
+            with open(file_path, 'w', encoding="utf-8") as f:
                 json.dump(settings, f, indent=4)
 
             print(f"{Colors.GREEN}Updated dashboard settings{Colors.END}")
@@ -757,7 +757,7 @@ class PermissionManager:
         test_file = install_dir / ".permission_test"
         try:
             # Try to create a test file
-            with open(test_file, 'w') as f:
+            with open(test_file, 'w', encoding="utf-8") as f:
                 f.write("test")
             
             # Try to delete it
