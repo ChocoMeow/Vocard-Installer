@@ -549,7 +549,6 @@ class ConfigFileUpdater:
                         f"LAVALINK_SERVER_PASSWORD={lavalink_config['password']}"
                     ]
                     service["expose"] = [lavalink_config["port"]]
-                    service["healthcheck"]["test"] = ["CMD", "curl", f"http://localhost:{lavalink_config['port']}/version"]
                     
                 if service_name == "vocard-db":
                     db_config = config['service_configs']['vocard-db']
