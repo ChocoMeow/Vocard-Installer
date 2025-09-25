@@ -601,9 +601,10 @@ class ConfigFileUpdater:
             # Dashboard settings
             if dashboard_config := config['service_configs'].get('vocard-dashboard'):
                 if 'ipc_client' in settings:
-                    settings['ipc_client']['enable'] = True
+                    settings['ipc_client']['host'] = "vocard-dashboard"
                     settings['ipc_client']['port'] = int(dashboard_config['port'])
                     settings['ipc_client']['password'] = dashboard_config['password']
+                    settings['ipc_client']['enable'] = True
 
             with open(file_path, 'w', encoding="utf-8") as f:
                 json.dump(settings, f, indent=4)
