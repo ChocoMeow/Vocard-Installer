@@ -697,13 +697,13 @@ class PermissionManager:
     def fix_directory_permissions(directory: Path, recursive: bool = True) -> bool:
         """Fix directory permissions for Docker container access"""
         try:
-            # Set directory permissions to 755 (rwxr-xr-x)
-            os.chmod(directory, 0o755)
+            # Set directory permissions to 777 (rwxr-xr-x)
+            os.chmod(directory, 0o777)
             
             if recursive and directory.is_dir():
                 for item in directory.rglob("*"):
                     if item.is_dir():
-                        os.chmod(item, 0o755)  # Directories: 755
+                        os.chmod(item, 0o777)  # Directories: 777
                     else:
                         os.chmod(item, 0o644)  # Files: 644
             
@@ -741,7 +741,7 @@ class PermissionManager:
                 # Set permissions for Docker container access
                 if not PermissionManager.fix_directory_permissions(directory):
                     print(f"{Colors.YELLOW}Warning: Could not set optimal permissions for {directory}{Colors.END}")
-                    print(f"{Colors.YELLOW}You may need to run: sudo chmod -R 755 {directory}{Colors.END}")
+                    print(f"{Colors.YELLOW}You may need to run: sudo chmod -R 777 {directory}{Colors.END}")
                 else:
                     print(f"{Colors.GREEN}Created and set permissions for: {directory}{Colors.END}")
                     
@@ -785,7 +785,7 @@ class PermissionManager:
             
             print(f"\n{Colors.CYAN}Option 2 - Fix directory permissions:{Colors.END}")
             print(f"  sudo chown -R $USER:$USER {install_dir}")
-            print(f"  sudo chmod -R 755 {install_dir}")
+            print(f"  sudo chmod -R 777 {install_dir}")
             
             print(f"\n{Colors.CYAN}Option 3 - Run installer with sudo:{Colors.END}")
             print(f"  sudo python3 {sys.argv[0]}")
@@ -793,7 +793,7 @@ class PermissionManager:
         elif system == "darwin":  # macOS
             print(f"\n{Colors.CYAN}Option 1 - Fix directory permissions:{Colors.END}")
             print(f"  sudo chown -R $(whoami):staff {install_dir}")
-            print(f"  chmod -R 755 {install_dir}")
+            print(f"  chmod -R 777 {install_dir}")
             
             print(f"\n{Colors.CYAN}Option 2 - Run installer with sudo:{Colors.END}")
             print(f"  sudo python3 {sys.argv[0]}")
@@ -981,7 +981,7 @@ class VocardInstaller:
         print(f"{Colors.CYAN}Fixing file permissions...{Colors.END}")
         if not self.permission_manager.fix_directory_permissions(install_dir):
             print(f"{Colors.YELLOW}Warning: Could not fix all file permissions. You may need to run:{Colors.END}")
-            print(f"{Colors.YELLOW}  sudo chmod -R 755 {install_dir}{Colors.END}")
+            print(f"{Colors.YELLOW}  sudo chmod -R 777 {install_dir}{Colors.END}")
         else:
             print(f"{Colors.GREEN}File permissions set successfully{Colors.END}")
         
@@ -1008,7 +1008,7 @@ class VocardInstaller:
         
         print(f"\n{Colors.YELLOW}Troubleshooting:{Colors.END}")
         print("  If containers can't write to directories:")
-        print(f"    sudo chmod -R 755 {config['install_dir']}")
+        print(f"    sudo chmod -R 777 {config['install_dir']}")
         print(f"    sudo chown -R $USER:$USER {config['install_dir']}")
         print("  If Docker permission errors occur:")
         print("    sudo usermod -aG docker $USER && newgrp docker")
