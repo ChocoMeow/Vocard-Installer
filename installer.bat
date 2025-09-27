@@ -87,6 +87,7 @@ echo Running the Python script...
 
 if %errorlevel% neq 0 (
     echo ERROR: The Python script failed to execute.
+    pause
     exit /b 1
 )
 
