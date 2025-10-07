@@ -629,10 +629,18 @@ class ConfigFileUpdater:
             settings['server']['password'] = lavalink_config['password']
 
             # Update Spotify settings
-            spotify_settings = settings.get('plugins', {}).get('lavasrc', {}).get('spotify', {})
+            spotify_settings = settings['plugins']['lavasrc']['spotify']
             spotify_settings['clientId'] = lavalink_config['client_id']
             spotify_settings['clientSecret'] = lavalink_config['client_secret']
-            spotify_settings['preferAnonymousToken'] = False
+
+            if 'spotify-tokener' in config.get('enabled_services', []):
+                spotify_settings['customTokenEndpoint'] = 'http://spotify-tokener:49152/api/token'
+                
+            if 'yt-cipher' in config.get('enabled_services', []):
+                settings['plugins']['youtube']['remoteCipher'] = {
+                    'url': 'http://yt-cipher:8001',
+                    'password': ''
+                }
 
             with open(file_path, 'w', encoding="utf-8") as f:
                 yaml.dump(settings, f, default_flow_style=False, indent=4)
@@ -869,7 +877,13 @@ class DockerManager:
 class VocardInstaller:
     """Main installer class that orchestrates the installation process"""
     
-    OPTIONAL_SERVICES = ["lavalink", "spotify-tokener", "vocard-db", "vocard-dashboard"]
+    OPTIONAL_SERVICES = {
+        "lavalink": "🎵 Lavalink - High-quality audio streaming server (Recommended)",
+        "spotify-tokener": "🎧 Spotify Token Service - Enhanced Spotify integration",
+        "yt-cipher": "📺 YouTube Cipher - Replace the youtube cipher inside from Lavalink.",
+        "vocard-db": "🗄️ MongoDB - Database for user data and playlists (Recommended)",
+        "vocard-dashboard": "🌐 Web Dashboard - Web interface for bot management"
+    }
     GITHUB_REPO = "ChocoMeow/Vocard"
 
     def __init__(self):
@@ -903,24 +917,16 @@ class VocardInstaller:
         # Service configuration
         self.config_manager.display_section_header("🔧 OPTIONAL SERVICES CONFIGURATION", Colors.CYAN)
         print(f"{Colors.WHITE}Vocard supports several optional services that enhance functionality:{Colors.END}")
-        
-        service_descriptions = {
-            'lavalink': '🎵 Lavalink - High-quality audio streaming server (Recommended)',
-            'vocard-db': '🗄️ MongoDB - Database for user data and playlists (Recommended)', 
-            'vocard-dashboard': '🌐 Web Dashboard - Web interface for bot management',
-            'spotify-tokener': '🎧 Spotify Token Service - Enhanced Spotify integration'
-        }
-        
+
         config['service_configs'] = {}
         enabled_services = set()
-        
-        for i, service in enumerate(self.OPTIONAL_SERVICES):
+
+        for i, (service, description) in enumerate(self.OPTIONAL_SERVICES.items()):
             if i > 0:
                 self.config_manager.display_section_header("🔧 OPTIONAL SERVICES CONFIGURATION", Colors.CYAN)
                 print(f"{Colors.WHITE}Vocard supports several optional services that enhance functionality:{Colors.END}")
                 print(f"\n{Colors.WHITE}{'┄' * 40}{Colors.END}")
             
-            description = service_descriptions.get(service, f"⚙️ {service}")
             print(f"\n{Colors.BLUE}{description}{Colors.END}")
             
             if self.config_manager.get_yes_no_input(f"{Colors.YELLOW}Enable {service}?{Colors.END}"):
@@ -952,7 +958,7 @@ class VocardInstaller:
             print(f"{Colors.YELLOW}Warning: Some directories could not be created with optimal permissions{Colors.END}")
         
         # Update docker-compose.yml
-        disabled_services = set(self.OPTIONAL_SERVICES) - enabled_services
+        disabled_services = set(self.OPTIONAL_SERVICES.keys()) - enabled_services
         if not self.config_updater.update_docker_compose(
             install_dir / "docker-compose.yml", config, disabled_services
         ):

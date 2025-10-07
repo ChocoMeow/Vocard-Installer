@@ -24,8 +24,8 @@ services:
             - "2333"
 
     spotify-tokener:
-        image: ghcr.io/topi314/spotify-tokener:master
         container_name: spotify-tokener
+        image: ghcr.io/topi314/spotify-tokener:master
         restart: unless-stopped
         environment:
             - SPOTIFY_TOKENER_ADDR=0.0.0.0:49152
@@ -39,6 +39,15 @@ services:
             timeout: 5s
             retries: 5
 
+    yt-chiper:
+        container_name: yt-cipher
+        image: ghcr.io/kikkia/yt-cipher:master
+        restart: unless-stopped
+        networks:
+            - vocard
+        expose:
+            - 8001
+
     vocard-db:
         container_name: vocard-db
         image: mongo:8
@@ -50,7 +59,7 @@ services:
             - MONGO_INITDB_ROOT_USERNAME=admin # For your MongoDB URL use "mongodb://admin:admin@vocard-db:27017"
             - MONGO_INITDB_ROOT_PASSWORD=admin
         expose:
-            - "27017"
+            - 27017
         networks:
             - vocard
         command: ["mongod", "--oplogSize=1024", "--wiredTigerCacheSizeGB=1", "--auth", "--noscripting"]
