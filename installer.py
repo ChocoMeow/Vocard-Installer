@@ -639,7 +639,8 @@ class ConfigFileUpdater:
             if 'yt-cipher' in config.get('enabled_services', []):
                 settings['plugins']['youtube']['remoteCipher'] = {
                     'url': 'http://yt-cipher:8001',
-                    'password': ''
+                    'password': '',
+                    'userAgent': ''
                 }
 
             with open(file_path, 'w', encoding="utf-8") as f:
