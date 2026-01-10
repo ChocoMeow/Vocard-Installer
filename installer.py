@@ -124,6 +124,37 @@ You can use any name you prefer.''',
                 'help_url': None
             }
         },
+        'manual-mongodb': {
+            'mongodb_url': {
+                'prompt': 'MongoDB Connection URL',
+                'default': None,
+                'type': str,
+                'validate': 'mongodb_url',
+                'description': '''Complete MongoDB connection URL.
+
+This should include the protocol, credentials, host, port, and any connection parameters.
+
+Examples:
+- mongodb://username:password@localhost:27017
+- mongodb+srv://username:password@cluster.mongodb.net
+- mongodb://localhost:27017 (for local MongoDB without auth)
+
+Make sure your MongoDB server is accessible from where the bot will run.''',
+                'help_url': 'https://docs.mongodb.com/manual/reference/connection-string/'
+            },
+            'mongodb_name': {
+                'prompt': 'MongoDB Database Name',
+                'default': 'Vocard',
+                'type': str,
+                'description': '''Name of the MongoDB database to store bot data.
+
+This database will store user preferences, playlists, and bot settings.
+Default: Vocard
+
+You can use any name you prefer.''',
+                'help_url': None
+            }
+        },
         'lavalink': {
             'port': {
                 'prompt': 'Lavalink Port',
@@ -151,9 +182,10 @@ Choose a secure password for production use.''',
             },
             'client_id': {
                 'prompt': 'Spotify Client ID',
-                'default': None,
+                'default': '',
                 'type': str,
-                'description': '''Spotify application client ID (optional but recommended).
+                'optional': True,
+                'description': '''Spotify application client ID (optional).
 
 Required for Spotify music support. Leave empty to skip Spotify integration.
 
@@ -167,9 +199,10 @@ Example: 1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p''',
             },
             'client_secret': {
                 'prompt': 'Spotify Client Secret',
-                'default': None,
+                'default': '',
                 'type': str,
-                'description': '''Spotify application client secret (optional but recommended).
+                'optional': True,
+                'description': '''Spotify application client secret (optional).
 
 Required for Spotify music support. Leave empty to skip Spotify integration.
 
@@ -394,20 +427,31 @@ Change localhost:8080 to your actual domain/port if different.''',
             print(f"\n{Colors.BOLD}{Colors.YELLOW}📋 {field_config['prompt']}{Colors.END}")
             
             while True:
-                if field_config['default'] is None:
+                # Check if field is explicitly marked as optional
+                is_optional = field_config.get('optional', False)
+                
+                if field_config['default'] is None and not is_optional:
                     value = self.get_required_input(field_config['prompt'], field_config)
                 else:
-                    value = self.get_optional_input(field_config['prompt'], str(field_config['default']), field_config)
+                    default_value = str(field_config['default']) if field_config['default'] is not None else ''
+                    value = self.get_optional_input(field_config['prompt'], default_value, field_config)
                 
-                # If empty value is provided for optional field, use default
-                if not value and field_config['default'] is not None:
-                    value = str(field_config['default'])
-                    break
+                # If empty value is provided for optional field, use default or empty
+                if not value:
+                    if field_config['default'] is not None:
+                        value = str(field_config['default'])
+                    elif is_optional:
+                        config[field] = ""
+                        break
+                    else:
+                        # This shouldn't happen for required fields, but just in case
+                        continue
                 
-                # Skip empty optional fields (like Spotify credentials)
-                if not value and field_config['default'] is None:
-                    config[field] = ""
-                    break
+                # Validate the input if validation is specified
+                if field_config.get('validate') == 'mongodb_url' and value:
+                    if not (value.startswith('mongodb://') or value.startswith('mongodb+srv://')):
+                        print(f"{Colors.RED}Invalid MongoDB URL format. Must start with 'mongodb://' or 'mongodb+srv://'{Colors.END}")
+                        continue
                 
                 # Convert value to the appropriate type
                 try:
@@ -562,6 +606,10 @@ class ConfigFileUpdater:
                 if service_name == "vocard-dashboard":
                     dashboard_config = config['service_configs']['vocard-dashboard']
                     service["ports"] = [f"{dashboard_config['port']}:{dashboard_config['port']}"]
+                    service["healthcheck"]["test"] = [
+                        "CMD", "python", "-c", 
+                        f"import urllib.request; urllib.request.urlopen('http://localhost:{dashboard_config['port']}/health').read()"
+                    ]
 
             with open(file_path, 'w', encoding="utf-8") as f:
                 yaml.dump(docker_compose, f, default_flow_style=False, indent=4)
@@ -591,6 +639,10 @@ class ConfigFileUpdater:
                     f"@vocard-db:27017"
                 )
                 settings['mongodb_name'] = db_config['dbname']
+            elif manual_db_config := config['service_configs'].get('manual-mongodb'):
+                # Using manual MongoDB configuration
+                settings['mongodb_url'] = manual_db_config['mongodb_url']
+                settings['mongodb_name'] = manual_db_config['mongodb_name']
 
             # Lavalink settings
             if lavalink_config := config['service_configs'].get('lavalink'):
@@ -628,10 +680,10 @@ class ConfigFileUpdater:
             settings['server']['port'] = int(lavalink_config['port'])
             settings['server']['password'] = lavalink_config['password']
 
-            # Update Spotify settings
+            # Update Spotify settings (only if provided)
             spotify_settings = settings['plugins']['lavasrc']['spotify']
-            spotify_settings['clientId'] = lavalink_config['client_id']
-            spotify_settings['clientSecret'] = lavalink_config['client_secret']
+            spotify_settings['clientId'] = lavalink_config.get('client_id', '')
+            spotify_settings['clientSecret'] = lavalink_config.get('client_secret', '')
 
             if 'spotify-tokener' in config.get('enabled_services', []):
                 spotify_settings['customTokenEndpoint'] = 'http://spotify-tokener:49152/api/token'
@@ -882,7 +934,7 @@ class VocardInstaller:
         "lavalink": "🎵 Lavalink - High-quality audio streaming server (Recommended)",
         "spotify-tokener": "🎧 Spotify Token Service - Enhanced Spotify integration",
         "yt-cipher": "📺 YouTube Cipher - Replace the youtube cipher inside from Lavalink.",
-        "vocard-db": "🗄️ MongoDB - Database for user data and playlists (Recommended)",
+        "vocard-db": "🗄️ MongoDB - Database for user data and playlists (Required - if not enabled, you'll need to provide manual MongoDB connection)",
         "vocard-dashboard": "🌐 Web Dashboard - Web interface for bot management"
     }
     GITHUB_REPO = "ChocoMeow/Vocard"
@@ -938,6 +990,16 @@ class VocardInstaller:
                     )
         
         config['enabled_services'] = enabled_services
+        
+        # If MongoDB service is not enabled, collect manual MongoDB configuration
+        if 'vocard-db' not in enabled_services:
+            self.config_manager.display_section_header("🗄️ MANUAL MONGODB CONFIGURATION", Colors.RED)
+            print(f"{Colors.YELLOW}Since you didn't enable the MongoDB service, you need to provide manual MongoDB connection details.{Colors.END}")
+            print(f"{Colors.WHITE}MongoDB is required for the bot to store user data and settings.{Colors.END}")
+            
+            config['service_configs']['manual-mongodb'] = (
+                self.config_manager.collect_service_configuration('manual-mongodb')
+            )
         
         print(f"\n{Colors.GREEN}✅ Service selection completed!{Colors.END}")
         print(f"{Colors.WHITE}Enabled services: {', '.join(enabled_services) if enabled_services else 'None'}{Colors.END}")

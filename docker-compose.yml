@@ -39,7 +39,7 @@ services:
             timeout: 5s
             retries: 5
 
-    yt-chiper:
+    yt-cipher:
         container_name: yt-cipher
         image: ghcr.io/kikkia/yt-cipher:master
         restart: unless-stopped
@@ -80,6 +80,12 @@ services:
             - 8000:8000
         networks:
             - vocard
+        healthcheck:
+            test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 10s
 
     vocard:
         container_name: vocard
@@ -94,6 +100,8 @@ services:
             - vocard
         depends_on:
             vocard-db:
+                condition: service_healthy
+            vocard-dashboard:
                 condition: service_healthy
 
 networks:
