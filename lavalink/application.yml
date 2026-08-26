@@ -101,11 +101,20 @@ plugins:
             playlistLoadLimit: 1 # The number of pages at 50 tracks each
             artistLoadLimit: 1 # The number of pages at 10 tracks each
             recommendationsLoadLimit: 10 # Number of tracks
+    lavalyrics:
+        sources: # The order in which the lyrics sources will be queried
+           - spotify
+           - youtube
+           - deezer
+           - yandexMusic
+      
 lavalink:
     plugins:
-        - dependency: "dev.lavalink.youtube:youtube-plugin:1.18.1" # Please check the latest version at https://github.com/lavalink-devs/youtube-source/releases
+        - dependency: "dev.lavalink.youtube:youtube-plugin:1.18.2" # Please check the latest version at https://github.com/lavalink-devs/youtube-source/releases
           snapshot: false
-        - dependency: "com.github.topi314.lavasrc:lavasrc-plugin:4.8.1" # Please check the latest version at https://github.com/topi314/LavaSrc/releases
+        - dependency: "com.github.topi314.lavasrc:lavasrc-plugin:4.8.3" # Please check the latest version at https://github.com/topi314/LavaSrc/releases
+          snapshot: false
+        - dependency: "com.github.topi314.lavalyrics:lavalyrics-plugin:1.1.0" # Please check the latest version at https://github.com/topi314/LavaLyrics/releases
           snapshot: false
     #    - dependency: "com.github.example:example-plugin:1.0.0" # required, the coordinates of your plugin
     #      repository: "https://maven.example.com/releases" # optional, defaults to the Lavalink releases repository by default
