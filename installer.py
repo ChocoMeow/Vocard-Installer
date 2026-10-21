@@ -605,7 +605,13 @@ class ConfigFileUpdater:
                 
                 if service_name == "vocard-dashboard":
                     dashboard_config = config['service_configs']['vocard-dashboard']
-                    service["ports"] = [f"{dashboard_config['port']}:{dashboard_config['port']}"]
+                    host = dashboard_config['host'].lower()
+                    port = dashboard_config['port']
+                    if host == "localhost":
+                        host = "127.0.0.1"
+                    elif ":" in host and not host.startswith("["):
+                        host = f"[{host}]"
+                    service["ports"] = [f"{port}:{port}" if host == "0.0.0.0" else f"{host}:{port}:{port}"]
                     service["healthcheck"]["test"] = [
                         "CMD", "python", "-c", 
                         f"import urllib.request; urllib.request.urlopen('http://localhost:{dashboard_config['port']}/health').read()"
@@ -714,7 +720,7 @@ class ConfigFileUpdater:
                 settings = json.load(f)
 
             settings.update({
-                "host": dashboard_config['host'],
+                "host": "0.0.0.0",
                 "port": int(dashboard_config['port']),
                 "password": dashboard_config['password'],
                 "client_id": config['client_id'],
@@ -1063,8 +1069,13 @@ class VocardInstaller:
         print(f"{Colors.GREEN}You can invite your bot using the following link:\nhttps://discord.com/oauth2/authorize?client_id={config['client_id']}&permissions=8&scope=bot+applications.commands{Colors.END}")
         
         if 'vocard-dashboard' in config['enabled_services']:
-            dashboard_port = config['service_configs']['vocard-dashboard']['port']
-            print(f"{Colors.GREEN}Access the dashboard at: http://localhost:{dashboard_port}{Colors.END}")
+            dashboard_config = config['service_configs']['vocard-dashboard']
+            dashboard_host = dashboard_config['host']
+            if dashboard_host in ("0.0.0.0", "::", "[::]"):
+                dashboard_host = "localhost"
+            elif ":" in dashboard_host and not dashboard_host.startswith("["):
+                dashboard_host = f"[{dashboard_host}]"
+            print(f"{Colors.GREEN}Access the dashboard at: http://{dashboard_host}:{dashboard_config['port']}{Colors.END}")
             
         print("=" * 60)
         print(f"{Colors.BLUE}Installation directory: {config['install_dir']}{Colors.END}")
